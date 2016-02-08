@@ -1,0 +1,15 @@
+[bot]
+profile = "./logbot.tox"
+name = "logbot"
+avatar = "./avatar.png"
+bootstrap_addr = "127.0.0.1:33445"
+bootstrap_pk = ""
+
+[master]
+pk = ""
+groupbot = ""
+number = 0
+
+[log]
+path = "./logs/"
+offline_message = true

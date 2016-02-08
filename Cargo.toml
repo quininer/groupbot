@@ -1,0 +1,12 @@
+[package]
+name = "logbot"
+version = "0.1.0"
+authors = ["quininer kel <quininer@live.com>"]
+
+[dependencies]
+chrono = "*"
+csv = "*"
+toml = "*"
+
+[dependencies.tox]
+path = "../tox-rs"
