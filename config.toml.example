@@ -1,15 +1,17 @@
 [bot]
-profile = "./logbot.tox"
-name = "logbot"
+profile = "./groupbot.tox"
+name = "groupbot"
 avatar = "./avatar.png"
+status_message = "groupbot."
 bootstrap_addr = "127.0.0.1:33445"
 bootstrap_pk = ""
 
 [master]
-pk = ""
-groupbot = ""
-number = 0
+pk = [ "" ]
 
 [log]
 path = "./logs/"
-offline_message = true
+
+[keyword]
+fake_offline_message = "offline message"
+fake_group = "mobile"

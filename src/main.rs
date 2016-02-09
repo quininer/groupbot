@@ -1,27 +1,38 @@
 extern crate tox;
 extern crate toml;
 
+mod utils;
+
+use std::env::args;
 use std::thread::sleep;
 use tox::core::{
-    ToxOptions, Event,
-    Network, Status, Chat, Listen
+    Tox, Event,
+    Status, Chat, Listen
 };
-use tox::core::group::{ GroupManage, GroupCreate, GroupType };
+use tox::core::group::{
+    Group,
+    GroupManage, GroupCreate, GroupType
+};
+
+use utils::{
+    parse_config, init
+};
 
 
 fn main() {
-    let mut bot = init();
+    let config = parse_config(args().next().unwrap_or("./config.toml".into()));
+    let (mut bot, avatar) = init(config.get("bot").and_then(|r| r.as_table()).unwrap());
     let botiter = bot.iterate();
 
     loop {
         sleep(bot.interval());
         match botiter.try_recv() {
             Ok(Event::SelfConnection(_)) => {
-                // check groupbot is friend.
+                // check group & create
                 unimplemented!()
             },
             Ok(Event::FriendConnection(_, _)) => {
-                // invite logbot to group
+                // invite to group
                 // send avatar
                 unimplemented!()
             },
@@ -30,25 +41,19 @@ fn main() {
                 unimplemented!()
             },
             Ok(Event::FriendMessage(_, _, _)) => {
-                // command
+                // command & transmit
                 unimplemented!()
             },
-            Ok(Event::GroupInvite(_, _, _) => {
-                // check pk & join
-                unimplemented!()
-            },
-            Ok(Event::GroupTitle(_, _, _, _)) | Ok(Event::GroupMessage(_, _, _, _)) => {
+            Ok(Event::GroupTitle(_, _, _)) | Ok(Event::GroupMessage(_, _, _, _)) => {
                 // write log
                 unimplemented!()
             },
-            Ok(Event::GroupPeerChange(_, _, _) => {
+            Ok(Event::GroupPeerChange(_, _, _)) => {
                 // fake offline message & join/leave log
                 unimplemented!()
-            }
+            },
+            Err(_) => (),
+            e @ _ => println!("Event: {:?}", e)
         }
     }
-}
-
-fn init() {
-    unimplemented!()
 }
