@@ -8,6 +8,15 @@ use tox::core::{
     Network
 };
 
+macro_rules! try_loop {
+    ( $exp:expr ) => {
+        match $exp {
+            Ok(out) => out,
+            Err(_) => continue
+        }
+    }
+}
+
 
 pub fn parse_config<P: AsRef<Path>>(path: P) -> Table {
     let mut data = String::new();
@@ -20,7 +29,7 @@ pub fn parse_config<P: AsRef<Path>>(path: P) -> Table {
 pub fn init(config: &Table) -> (Tox, Vec<u8>) {
     let path = config.get("profile").and_then(|r| r.as_str()).unwrap();
 
-    let mut im = match File::open(path) {
+    let bot = match File::open(path) {
         Ok(mut fd) => {
             let mut data = Vec::new();
             fd.read_to_end(&mut data).unwrap();
@@ -29,16 +38,16 @@ pub fn init(config: &Table) -> (Tox, Vec<u8>) {
                 .generate().unwrap()
             },
         Err(_) => {
-            let mut im = ToxOptions::new().generate().unwrap();
+            let bot = ToxOptions::new().generate().unwrap();
             File::create(path).unwrap()
-                .write(&im.save()).ok();
-            im
+                .write(&bot.save()).ok();
+            bot
         }
     };
 
-    im.set_name(config.get("name").and_then(|r| r.as_str()).unwrap_or("groupbot")).ok();
-    im.set_status_message(config.get("status_message").and_then(|r| r.as_str()).unwrap_or("say 'help' to me.")).ok();
-    im.bootstrap(
+    bot.set_name(config.get("name").and_then(|r| r.as_str()).unwrap_or("groupbot")).ok();
+    bot.set_status_message(config.get("status_message").and_then(|r| r.as_str()).unwrap_or("say 'help' to me.")).ok();
+    bot.bootstrap(
         config.get("bootstrap_addr").and_then(|r| r.as_str()).unwrap(),
         config.get("bootstrap_pk").and_then(|r| r.as_str()).unwrap()
             .parse().unwrap()
@@ -52,5 +61,5 @@ pub fn init(config: &Table) -> (Tox, Vec<u8>) {
         }
     }
 
-    (im, avatar_data)
+    (bot, avatar_data)
 }

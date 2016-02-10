@@ -15,3 +15,6 @@ path = "./logs/"
 [keyword]
 fake_offline_message = "offline message"
 fake_group = "mobile"
+no_avatar = "no avatar"
+no_invite = "no invite"
+
