@@ -8,6 +8,7 @@ bootstrap_pk = ""
 
 [master]
 pk = [ "" ]
+passphrase = [ "add me" ]
 
 [log]
 path = "./logs/"
