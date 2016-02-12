@@ -44,17 +44,19 @@ fn main() {
                 if connection == Connection::NONE { continue };
 
                 // TODO check friend status
-                if avatar.len() != 0
+                if !check!(keyword config, "off_avatar", friend)
+                    && avatar.len() != 0
                     && avatar_off.insert(try_loop!(friend.publickey()))
                 {
                     friend.transmission(FileKind::AVATAR, "avatar.png", avatar.len() as u64, None).ok();
                 }
 
-                // TODO check friend status
-                group.invite(&friend);
+                if !check!(keyword config, "off_invite", friend) {
+                    group.invite(&friend);
+                }
             },
             Ok(Event::RequestFriend(pk, msg)) => {
-                if !check!(config, "passphrase", k, {
+                if !check!(master config, "passphrase", k, {
                     msg == try_unwrap!(k.as_str()).as_bytes()
                 }) {
                     continue
@@ -81,18 +83,20 @@ fn main() {
                         if msg.starts_with(b"/ ") {
                             msg = &msg[2..];
                         }
-                        // TODO check friend status
-                        // TODO write log
-                        group.send(ty, format!(
-                            "({}) {}",
-                            String::from_utf8_lossy(&friend.name().unwrap_or("unknown".into())),
-                            String::from_utf8_lossy(msg)
-                        )).ok();
+
+                        if check!(keyword config, "open_group", friend) {
+                            // TODO write log
+                            group.send(ty, format!(
+                                "({}) {}",
+                                String::from_utf8_lossy(&friend.name().unwrap_or("unknown".into())),
+                                String::from_utf8_lossy(msg)
+                            )).ok();
+                        }
                     }
                 }
             },
             Ok(Event::GroupInvite(friend, ty, token)) => {
-                if !check!(config, "pk", k, {
+                if !check!(master config, "pk", k, {
                     try_loop!(friend.publickey()) == try_loop!(try_unwrap!(k.as_str()).parse())
                 }) {
                     continue

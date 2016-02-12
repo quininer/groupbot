@@ -33,15 +33,26 @@ macro_rules! try_unwrap {
 }
 
 macro_rules! check {
-    ( $config:expr, $lookup:expr, $k:ident, $pass:block ) => {{
+    ( master $config:expr, $lookup:expr, $k:ident, $pass:block ) => {{
         let mut pass = true;
         if let Some(kk) = $config.get("master").and_then(|r| r.lookup($lookup)) {
             pass = false;
             for $k in try_unwrap!(kk.as_slice()) {
-                pass = $pass || pass;
+                pass = $pass;
+                if pass { break };
             }
         }
         pass
+    }};
+    ( keyword $config:expr, $lookup:expr, $friend:expr ) => {{
+        let key = try_unwrap!(
+            $config.get("keyword")
+                .and_then(|r| r.lookup($lookup))
+                .and_then(|r| r.as_str())
+        );
+        String::from_utf8_lossy(&try_loop!($friend.status_message()))
+            .into_owned()
+            .find(key).is_some()
     }}
 }
 
@@ -101,8 +112,4 @@ pub fn init(config: &Table) -> (Tox, Vec<u8>, String) {
     }
 
     (bot, avatar_data, path.into())
-}
-
-pub fn check_status(status_message: &[u8], keyword: &[u8]) -> bool {
-    unimplemented!()
 }
