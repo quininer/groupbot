@@ -56,6 +56,36 @@ macro_rules! check {
     }}
 }
 
+macro_rules! log {
+    (open $config:expr, $day:expr) => {
+        OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(
+                Path::new(
+                    $config.get("log")
+                        .and_then(|r| r.lookup("path"))
+                        .and_then(|r| r.as_str())
+                        .unwrap()
+                )
+                    .join(format!("{}.log", UTC::today()))
+            )
+            .unwrap()
+    };
+    (write ($config:expr, $today:expr), $fd:expr, $msg:expr) => {{
+        let now = UTC::today();
+        if $today != now {
+            $fd = log!(open $config, now);
+            $today = now;
+        }
+        $fd.write_fmt(format_args!(
+            "{} {}\n",
+            UTC::now().timestamp(),
+            $msg
+        )).ok();
+    }}
+}
+
 pub fn parse_config<P: AsRef<Path>>(path: P) -> Table {
     let mut data = String::new();
     File::open(path).unwrap()

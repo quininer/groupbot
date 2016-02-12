@@ -3,3 +3,4 @@ Cargo.lock
 config.toml
 *.tox
 avatar.png
+logs
