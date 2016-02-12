@@ -6,14 +6,14 @@ extern crate chrono;
 
 use std::env::args;
 use std::thread::sleep;
-use std::collections::{ HashMap, HashSet };
+use std::collections::HashMap;
 use chrono::UTC;
 use tox::core::{
     Event,
     Status, Chat, Listen, FriendManage
 };
 use tox::core::status::Connection;
-use tox::core::file::{ FileKind, FileOperate, FileManage };
+use tox::core::file::{ hash, FileKind, FileOperate, FileManage };
 use tox::core::group::{ GroupCreate, GroupType, PeerChange };
 use tox::av::AvGroupCreate;
 
@@ -26,29 +26,24 @@ fn main() {
     println!("Tox ID: {}", bot.address());
 
     let botiter = bot.iterate();
-    // let mut group = bot.create_group_av().unwrap();
     let mut group = bot.create_group().unwrap();
-    let mut avatar_off = HashSet::new();
     let mut leave_time = HashMap::new();
-    let mut today = UTC::today();
 
     'main: loop {
         sleep(bot.interval());
         match botiter.try_recv() {
             Ok(Event::FriendConnection(friend, connection)) => {
-                let now = UTC::today();
-                if now != today {
-                    today = now;
-                    avatar_off = HashSet::new();
-                }
                 if connection == Connection::NONE { continue };
 
-                // TODO check friend status
-                if !check!(keyword config, "off_avatar", friend)
-                    && avatar.len() != 0
-                    && avatar_off.insert(try_loop!(friend.publickey()))
+                if avatar.len() != 0
+                    && !check!(keyword config, "off_avatar", friend)
                 {
-                    friend.transmission(FileKind::AVATAR, "avatar.png", avatar.len() as u64, None).ok();
+                    friend.transmission(
+                        FileKind::AVATAR,
+                        "avatar.png",
+                        avatar.len() as u64,
+                        Some(&hash(&avatar))
+                    ).ok();
                 }
 
                 if !check!(keyword config, "off_invite", friend) {
@@ -56,8 +51,8 @@ fn main() {
                 }
             },
             Ok(Event::RequestFriend(pk, msg)) => {
-                if !check!(master config, "passphrase", k, {
-                    msg == try_unwrap!(k.as_str()).as_bytes()
+                if check!(master config, "passphrase", k, {
+                    msg != try_unwrap!(k.as_str()).as_bytes()
                 }) {
                     continue
                 };
@@ -67,7 +62,7 @@ fn main() {
                 }
             },
             Ok(Event::FriendFileChunkRequest(_, file, pos, len)) => {
-                if pos as usize + len < avatar.len() {
+                if pos as usize + len <= avatar.len() {
                     file.send(pos, &avatar[pos as usize .. pos as usize + len]).ok();
                 }
             },
@@ -115,15 +110,24 @@ fn main() {
             },
             Ok(Event::GroupTitle(_, _, _)) => {
                 // write log
-                unimplemented!()
+                ()
             },
             Ok(Event::GroupMessage(_, _, _, _)) => {
                 // write log
-                unimplemented!()
+                ()
             },
             Ok(Event::GroupPeerChange(_, peer, change)) => {
                 match change {
-                    PeerChange::ADD => { /* TODO fake offline message & join log */ }
+                    PeerChange::ADD => {
+                        /* TODO join log */
+                        if check!(keyword
+                            config,
+                            "open_offline_message",
+                            try_loop!(bot.get_friend(try_loop!(peer.publickey())))
+                        ) {
+                            // TODO fake offline message
+                        }
+                    },
                     PeerChange::DEL => {
                         /* TODO leave log */
                         leave_time.insert(try_loop!(peer.publickey()), UTC::now());
