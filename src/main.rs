@@ -15,6 +15,7 @@ use tox::core::{
     Event,
     Status, Chat, Listen, FriendManage
 };
+use tox::core::status::Connection;
 use tox::core::chat::MessageType;
 use tox::core::file::{ hash, FileKind, FileOperate, FileManage };
 use tox::core::group::{ GroupCreate, GroupType, PeerChange };
@@ -38,7 +39,6 @@ fn main() {
         sleep(bot.interval());
         match botiter.try_recv() {
             Ok(Event::FriendStatusMessage(friend, _)) => {
-
                 if avatar.len() != 0
                     && !check!(keyword config, "off_avatar", friend)
                 {
@@ -122,7 +122,7 @@ fn main() {
             },
             Ok(Event::GroupTitle(_, peer_opt, title)) => {
                 let msg = format!(
-                    "* ({}) title: {}",
+                    "title ({}): {}",
                     String::from_utf8_lossy(
                         &peer_opt
                             .and_then(|r| r.name().ok())
@@ -140,15 +140,18 @@ fn main() {
             },
             Ok(Event::GroupMessage(_, peer, mty, msg)) => {
                 let msg = format!(
-                    "{}({}) {}",
+                    "({}) {}",
+                    String::from_utf8_lossy(&peer.name().unwrap_or("Unknown".into())),
+                    String::from_utf8_lossy(&msg)
+                );
+                log!(write (config, today), logfd, format!(
+                    "{}{}",
                     match mty {
                         MessageType::NORMAL => "",
                         MessageType::ACTION => "* "
                     },
-                    String::from_utf8_lossy(&peer.name().unwrap_or("Unknown".into())),
-                    String::from_utf8_lossy(&msg)
-                );
-                log!(write (config, today), logfd, &msg);
+                    &msg
+                ));
 
                 if !peer.is_ours() {
                     for f in bot.list_friend() {
@@ -159,41 +162,73 @@ fn main() {
                 }
             },
             Ok(Event::GroupPeerChange(_, peer, change)) => {
+                // TODO new groupchat
+                if change == PeerChange::DEL { continue };
+
                 let peer_pk = try_loop!(peer.publickey());
                 let msg = format!(
-                    "* ({}) {}: {}",
-                    peer_pk,
+                    "{} {}",
+                    String::from_utf8_lossy(&peer.name().unwrap_or("Unknown".into())),
                     match change {
                         PeerChange::ADD => "join",
-                        PeerChange::DEL => "leave",
-                        PeerChange::NAME => "rename"
-                    },
-                    String::from_utf8_lossy(&peer.name().unwrap_or("Unknown".into()))
+                        PeerChange::NAME => "rename",
+                        _ => unreachable!()
+                    }
                 );
-                log!(write (config, today), logfd, &msg);
+
+                let f = bot.get_friend(peer_pk);
+                if change == PeerChange::ADD && f.is_ok() {
+                    let f = f.unwrap();
+                    if check!(keyword config, "open_offline_message", f) {
+                        for s in log!(read
+                            (config, today),
+                            leave_time.get(&peer_pk).unwrap_or(&UTC::now()).timestamp(),
+                            UTC::now().timestamp()
+                        ) {
+                            if s.starts_with("* ") {
+                                f.action(&s[2..]).ok();
+                            } else {
+                                f.say(&s).ok();
+                            };
+                        }
+                    };
+                };
+
+                log!(write (config, today), logfd, format!("* {}", &msg));
 
                 if !peer.is_ours() {
                     for f in bot.list_friend() {
                         if check!(keyword config, "open_group", f) {
                             f.action(&msg).ok();
-                        }
+                        };
                     }
                 }
 
-                match change {
-                    PeerChange::ADD => {
-                        if check!(keyword
-                            config,
-                            "open_offline_message",
-                            try_loop!(bot.get_friend(peer_pk))
-                        ) {
-                            // TODO fake offline message
-                        }
+
+            },
+            Ok(Event::FriendConnection(friend, connection)) => {
+                let friend_pk = try_loop!(friend.publickey());
+                match connection {
+                    Connection::NONE => {
+                        leave_time.insert(friend_pk, UTC::now());
                     },
-                    PeerChange::DEL => {
-                        leave_time.insert(peer_pk, UTC::now());
-                    },
-                    _ => ()
+                    Connection::TCP | Connection::UDP => {
+                        if check!(keyword config, "open_group", friend)
+                            && check!(keyword config, "open_offline_message", friend)
+                        {
+                            for s in log!(read
+                                (config, today),
+                                leave_time.get(&friend_pk).unwrap_or(&UTC::now()).timestamp(),
+                                UTC::now().timestamp()
+                            ) {
+                                if s.starts_with("* ") {
+                                    friend.action(&s[2..]).ok();
+                                } else {
+                                    friend.say(&s).ok();
+                                };
+                            }
+                        };
+                    }
                 };
             },
             Err(_) => (),

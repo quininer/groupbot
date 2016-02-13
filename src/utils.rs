@@ -57,19 +57,20 @@ macro_rules! check {
 }
 
 macro_rules! log {
+    (path $config:expr, $day:expr) => {
+        Path::new(
+            $config.get("log")
+                .and_then(|r| r.lookup("path"))
+                .and_then(|r| r.as_str())
+                .unwrap()
+        )
+            .join(format!("{}.log", $day))
+    };
     (open $config:expr, $day:expr) => {
         OpenOptions::new()
             .append(true)
             .create(true)
-            .open(
-                Path::new(
-                    $config.get("log")
-                        .and_then(|r| r.lookup("path"))
-                        .and_then(|r| r.as_str())
-                        .unwrap()
-                )
-                    .join(format!("{}.log", UTC::today()))
-            )
+            .open(log!(path $config, $day))
             .unwrap()
     };
     (write ($config:expr, $today:expr), $fd:expr, $msg:expr) => {{
@@ -83,7 +84,23 @@ macro_rules! log {
             UTC::now().timestamp(),
             $msg
         )).ok();
-    }}
+    }};
+    (read ($config:expr, $day:expr), $start:expr, $end:expr) => {
+        {
+            let mut data = String::new();
+            try_loop!(OpenOptions::new().read(true).open(log!(path $config, $day)))
+                .read_to_string(&mut data).ok();
+            data
+        }.lines()
+            .map(|r| (r, r.find(" ")))
+            .filter(|&(_, w)| w.is_some())
+            .map(|(r, w)| r.split_at(w.unwrap()))
+            .map(|(t, s)| (t.parse::<i64>(), s))
+            .filter(|&(ref t, _)| t.is_ok())
+            .map(|(t, s)| (t.unwrap(), s))
+            .filter(|&(t, _)| t >= $start && t <= $end)
+            .map(|(_, s)| s)
+    }
 }
 
 pub fn parse_config<P: AsRef<Path>>(path: P) -> Table {
