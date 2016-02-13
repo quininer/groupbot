@@ -84,11 +84,20 @@ fn main() {
                         }
 
                         if check!(keyword config, "open_group", friend) {
-                            group.send(ty, format!(
+                            let msg = format!(
                                 "({}) {}",
                                 String::from_utf8_lossy(&friend.name().unwrap_or("Unknown".into())),
                                 String::from_utf8_lossy(msg)
-                            )).ok();
+                            );
+                            group.send(ty, &msg).ok();
+
+                            for f in bot.list_friend() {
+                                if check!(keyword config, "open_group", f)
+                                    && f.publickey().ok() != friend.publickey().ok()
+                                {
+                                    f.send(ty, format!("(groupbot) {}", &msg)).ok();
+                                }
+                            }
                         }
                     }
                 }
@@ -121,7 +130,13 @@ fn main() {
                     ),
                     String::from_utf8_lossy(&title)
                 );
-                log!(write (config, today), logfd, msg);
+                log!(write (config, today), logfd, &msg);
+
+                for f in bot.list_friend() {
+                    if check!(keyword config, "open_group", f) {
+                        f.action(&msg).ok();
+                    }
+                }
             },
             Ok(Event::GroupMessage(_, peer, mty, msg)) => {
                 let msg = format!(
@@ -133,10 +148,14 @@ fn main() {
                     String::from_utf8_lossy(&peer.name().unwrap_or("Unknown".into())),
                     String::from_utf8_lossy(&msg)
                 );
-                log!(write (config, today), logfd, msg);
+                log!(write (config, today), logfd, &msg);
 
                 if !peer.is_ours() {
-                    // TODO group
+                    for f in bot.list_friend() {
+                        if check!(keyword config, "open_group", f) {
+                            f.send(mty, &msg).ok();
+                        }
+                    }
                 }
             },
             Ok(Event::GroupPeerChange(_, peer, change)) => {
@@ -151,7 +170,16 @@ fn main() {
                     },
                     String::from_utf8_lossy(&peer.name().unwrap_or("Unknown".into()))
                 );
-                log!(write (config, today), logfd, msg);
+                log!(write (config, today), logfd, &msg);
+
+                if !peer.is_ours() {
+                    for f in bot.list_friend() {
+                        if check!(keyword config, "open_group", f) {
+                            f.action(&msg).ok();
+                        }
+                    }
+                }
+
                 match change {
                     PeerChange::ADD => {
                         if check!(keyword
