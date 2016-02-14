@@ -83,6 +83,8 @@ macro_rules! log {
             "{} {}\n",
             UTC::now().timestamp(),
             $msg
+            // TODO
+            // $msg.to_base64()
         )).ok();
     }};
     (read ($config:expr, $day:expr), $start:expr, $end:expr) => {
@@ -100,6 +102,10 @@ macro_rules! log {
             .map(|(t, s)| (t.unwrap(), s))
             .filter(|&(t, _)| t >= $start && t <= $end)
             .map(|(_, s)| s)
+            // TODO encode & take tail 20 line
+            // .map(|s| s.from_base64())
+            // .filter(|&s| s.is_ok())
+            // .map(|s| s.unwrap())
     }
 }
 

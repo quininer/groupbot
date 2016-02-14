@@ -50,7 +50,9 @@ fn main() {
                     ).ok();
                 }
 
-                if !check!(keyword config, "off_invite", friend) {
+                if !check!(keyword config, "off_invite", friend)
+                    && !check!(keyword config, "open_group", friend)
+                {
                     group.invite(&friend);
                 }
             },
@@ -76,6 +78,9 @@ fn main() {
                         if !group.invite(&friend) {
                             friend.say("invite fail.").ok();
                         }
+                    },
+                    b"/id" => {
+                        friend.say(format!("{}", bot.address())).ok();
                     },
                     b"/help" => { friend.say("TODO").ok(); },
                     mut msg @ _ => {
