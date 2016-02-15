@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = ["quininer kel <quininer@live.com>"]
 
 [dependencies]
-chrono = "*"
-csv = "*"
-toml = "*"
+chrono = "0.2"
+csv = "0.14"
+toml = "0.1"
 
 [dependencies.tox]
-path = "../tox-rs"
+git = "https://github.com/quininer/tox-rs.git"

@@ -4,5 +4,5 @@ feature
 -------
 
 * group log
-* chat query
+* fake group
 * fake offline message
