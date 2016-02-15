@@ -82,9 +82,7 @@ macro_rules! log {
         $fd.write_fmt(format_args!(
             "{} {}\n",
             UTC::now().timestamp(),
-            $msg
-            // TODO
-            // $msg.to_base64()
+            $msg.as_bytes().to_base64(STANDARD)
         )).ok();
     }};
     (read ($config:expr, $day:expr), $start:expr, $end:expr) => {
@@ -94,18 +92,14 @@ macro_rules! log {
                 .read_to_string(&mut data).ok();
             data
         }.lines()
-            .map(|r| (r, r.find(" ")))
-            .filter(|&(_, w)| w.is_some())
+            .map(|r| (r, r.find(" "))).filter(|&(_, w)| w.is_some())
             .map(|(r, w)| r.split_at(w.unwrap()))
-            .map(|(t, s)| (t.parse::<i64>(), s))
-            .filter(|&(ref t, _)| t.is_ok())
-            .map(|(t, s)| (t.unwrap(), s))
-            .filter(|&(t, _)| t >= $start && t <= $end)
+            .map(|(t, s)| (t.parse::<i64>(), s)).filter(|&(ref t, _)| t.is_ok())
+            .map(|(t, s)| (t.unwrap(), s)).filter(|&(t, _)| t >= $start && t <= $end)
             .map(|(_, s)| s)
-            // TODO encode & take tail 20 line
-            // .map(|s| s.from_base64())
-            // .filter(|&s| s.is_ok())
-            // .map(|s| s.unwrap())
+            // TODO take tail 20 line
+            .map(|s| s.from_base64()).filter(|ref s| s.is_ok())
+            .map(|s| s.unwrap())
     }
 }
 

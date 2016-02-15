@@ -2,7 +2,7 @@
 profile = "./groupbot.tox"
 name = "groupbot"
 avatar = "./avatar.png"
-status_message = "groupbot."
+status_message = "i'm groupbot."
 bootstrap_addr = "127.0.0.1:33445"
 bootstrap_pk = ""
 

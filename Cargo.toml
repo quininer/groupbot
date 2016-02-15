@@ -7,6 +7,7 @@ authors = ["quininer kel <quininer@live.com>"]
 chrono = "0.2"
 csv = "0.14"
 toml = "0.1"
+rustc-serialize = "0.3"
 
 [dependencies.tox]
 git = "https://github.com/quininer/tox-rs.git"

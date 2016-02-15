@@ -1,6 +1,7 @@
 extern crate tox;
 extern crate toml;
 extern crate chrono;
+extern crate rustc_serialize;
 
 #[macro_use] mod utils;
 
@@ -11,6 +12,7 @@ use std::fs::OpenOptions;
 use std::io::{ Write, Read };
 use std::collections::HashMap;
 use chrono::UTC;
+use rustc_serialize::base64::{ FromBase64, ToBase64, STANDARD };
 use tox::core::{
     Event,
     Status, Chat, Listen, FriendManage
@@ -56,13 +58,7 @@ fn main() {
                     group.invite(&friend);
                 }
             },
-            Ok(Event::RequestFriend(pk, msg)) => {
-                if check!(master config, "passphrase", k, {
-                    msg != try_unwrap!(k.as_str()).as_bytes()
-                }) {
-                    continue
-                };
-
+            Ok(Event::RequestFriend(pk, _)) => {
                 if bot.add_friend(pk).is_ok() {
                     save(&path, &bot);
                 }
@@ -190,7 +186,7 @@ fn main() {
                             leave_time.get(&peer_pk).unwrap_or(&UTC::now()).timestamp(),
                             UTC::now().timestamp()
                         ) {
-                            if s.starts_with("* ") {
+                            if s.starts_with(b"* ") {
                                 f.action(&s[2..]).ok();
                             } else {
                                 f.say(&s).ok();
@@ -226,7 +222,7 @@ fn main() {
                                 leave_time.get(&friend_pk).unwrap_or(&UTC::now()).timestamp(),
                                 UTC::now().timestamp()
                             ) {
-                                if s.starts_with("* ") {
+                                if s.starts_with(b"* ") {
                                     friend.action(&s[2..]).ok();
                                 } else {
                                     friend.say(&s).ok();
