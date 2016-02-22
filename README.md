@@ -1,8 +1,9 @@
-Tox Group logbot.
+Tox Group Bot.
 
 feature
 -------
 
-* group log
+* auto invite
+* avatar
 * fake group
 * fake offline message

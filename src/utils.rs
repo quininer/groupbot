@@ -98,7 +98,7 @@ macro_rules! log {
             .map(|(t, s)| (t.unwrap(), s)).filter(|&(t, _)| t >= $start && t <= $end)
             .map(|(_, s)| s)
             // TODO take tail 20 line
-            .map(|s| s.from_base64()).filter(|ref s| s.is_ok())
+            .map(|s| s[1..].from_base64()).filter(|ref s| s.is_ok())
             .map(|s| s.unwrap())
     }
 }
