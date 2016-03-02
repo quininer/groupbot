@@ -97,9 +97,11 @@ macro_rules! log {
             .map(|(t, s)| (t.parse::<i64>(), s)).filter(|&(ref t, _)| t.is_ok())
             .map(|(t, s)| (t.unwrap(), s)).filter(|&(t, _)| t >= $start && t <= $end)
             .map(|(_, s)| s)
-            // TODO take tail 20 line
             .map(|s| s[1..].from_base64()).filter(|ref s| s.is_ok())
             .map(|s| s.unwrap())
+            .rev().take(20)
+            .collect::<Vec<Vec<u8>>>().iter()
+            .rev()
     }
 }
 
