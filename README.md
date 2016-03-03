@@ -1,5 +1,7 @@
 Tox Group Bot.
 
+Compile abnormal consumption of memory, until I have time, I'll rewrite.
+
 feature
 -------
 

@@ -37,7 +37,7 @@ fn main() {
     let mut logfd = log!(open config, UTC::today());
     let mut today = UTC::today();
 
-    'main: loop {
+    loop {
         sleep(bot.interval());
         match botiter.try_recv() {
             Ok(Event::FriendStatusMessage(friend, _)) => {
