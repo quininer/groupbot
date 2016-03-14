@@ -126,12 +126,12 @@ pub fn init(config: &Table) -> (Tox, Vec<u8>, String) {
         Ok(mut fd) => {
             let mut data = Vec::new();
             fd.read_to_end(&mut data).unwrap();
-            ToxOptions::new()
+            ToxOptions::default()
                 .from(&data)
                 .generate().unwrap()
             },
         Err(_) => {
-            let bot = ToxOptions::new().generate().unwrap();
+            let bot = ToxOptions::default().generate().unwrap();
             save(path, &bot);
             bot
         }

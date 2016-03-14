@@ -1,6 +1,6 @@
 [package]
 name = "groupbot"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["quininer kel <quininer@live.com>"]
 
 [dependencies]
@@ -10,3 +10,4 @@ rustc-serialize = "0.3"
 
 [dependencies.tox]
 git = "https://github.com/quininer/tox-rs.git"
+version = "0.2"
