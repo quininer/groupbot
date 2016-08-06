@@ -110,15 +110,16 @@ fn main() {
                     continue
                 };
 
-                match match ty {
+                group.leave();
+                group = match match ty {
                     GroupType::TEXT => bot.join(&friend, &token),
                     GroupType::AV => bot.join_av(&friend, &token, Box::new(|_,_,_,_,_,_| ()))
                 } {
-                    Ok(g) => {
-                        group.leave();
-                        group = g;
-                    },
-                    Err(_) => { friend.say("join fail.").ok(); }
+                    Ok(g) => g,
+                    Err(_) => {
+                        friend.say("join fail.").ok();
+                        bot.create_group().unwrap()
+                    }
                 };
             },
             Ok(Event::GroupTitle(_, peer_opt, title)) => {
